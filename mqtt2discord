@@ -7,11 +7,11 @@ import paho.mqtt.client
 from dhooks import Webhook
 
 DEBUG = os.environ.get('DEBUG') == '1'
-DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL')
+DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL', 'https://discord.com/api/webhooks/721542589320527902/w2Z9hbnvb--RTpXQDrpQyElfPjtovaQWnzAdsY9N3nViETj59mFSkgO0dP4epVQM927j')
 MQTT_CLIENT_ID = os.environ.get('MQTT_CLIENT_ID', 'mqtt2discord')
 MQTT_HOST = os.environ.get('MQTT_HOST', 'localhost')
 MQTT_PORT = int(os.environ.get('MQTT_PORT', '1883'))
-MQTT_TOPIC = os.environ.get('MQTT_TOPIC', '#')
+MQTT_TOPIC = os.environ.get('MQTT_TOPIC', 'discord/#')
 
 
 def discord_msg(message):
@@ -20,7 +20,12 @@ def discord_msg(message):
     if DEBUG:
         print(f'To discord: {message}')
 
-    discord = Webhook(DISCORD_WEBHOOK_URL)
+    print('Webhook URL:', DISCORD_WEBHOOK_URL)
+    print('message:', message)
+
+    discord = Webhook(url=DISCORD_WEBHOOK_URL)
+
+    print('info:', discord.get_info())
     discord.send(message)
 
 

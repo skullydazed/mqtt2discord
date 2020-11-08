@@ -1,0 +1,12 @@
+[Unit]
+Description=Watch MQTT for messages to send to discord
+After=network.target
+
+[Service]
+User=pi
+Environment=DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/721542589320527902/w2Z9hbnvb--RTpXQDrpQyElfPjtovaQWnzAdsY9N3nViETj59mFSkgO0dP4epVQM927j
+Environment=MQTT_HOST=172.16.25.1
+ExecStart=/home/pi/mqtt2discord/mqtt2discord
+
+[Install]
+WantedBy=multi-user.target
