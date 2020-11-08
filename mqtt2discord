@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+
+import re
+import os
+
+import paho.mqtt.client
+from dhooks import Webhook
+
+DEBUG = os.environ.get('DEBUG') == '1'
+DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL')
+MQTT_CLIENT_ID = os.environ.get('MQTT_CLIENT_ID', 'mqtt2discord')
+MQTT_HOST = os.environ.get('MQTT_HOST', 'localhost')
+MQTT_PORT = int(os.environ.get('MQTT_PORT', '1883'))
+MQTT_TOPIC = os.environ.get('MQTT_TOPIC', '#')
+
+
+def discord_msg(message):
+    """Send a simple text message to discord.
+    """
+    if DEBUG:
+        print(f'To discord: {message}')
+
+    discord = Webhook(DISCORD_WEBHOOK_URL)
+    discord.send(message)
+
+
+def on_connect(mqtt, userdata, flags, rc):
+    """Callback for MQTT connects."""
+    #print("MQTT connected: " + mqtt.connack_string(rc))
+    print("MQTT connected")
+    if rc != 0:
+        print("Could not connect. Error: " + str(rc))
+    else:
+        mqtt.subscribe(MQTT_TOPIC)
+
+
+def on_disconnect(mqtt, userdata, rc):
+    """Callback for MQTT disconnects."""
+    print("MQTT disconnected: " + mqtt.connack_string(rc))
+
+
+def on_log(mqtt, obj, level, string):
+    if level < 16:
+        print('***', string)
+
+
+def on_message(mqtt, userdata, msg):
+    """Callback for MQTT message PUBLISH."""
+    payload = msg.payload.decode('utf-8')
+    topic = msg.topic.split('/', 1)[-1]
+
+    if topic and topic != 'discord':
+        discord_msg(f'{topic}: {payload}')
+    else:
+        discord_msg(f':interrobang: {payload}')
+
+
+if __name__ == '__main__':
+    # Check if discord if configured.
+    if not DISCORD_WEBHOOK_URL or DISCORD_WEBHOOK_URL == 'none':
+        print('*** DISCORD_WEBHOOK_URL not configured, will not send messages to discord.')
+        discord_msg = print
+
+    # Setup and start the mqtt app
+    mqtt = paho.mqtt.client.Client('mqtt2discord')
+    mqtt.on_connect = on_connect
+    mqtt.on_disconnect = on_disconnect
+    mqtt.on_log = on_log
+    mqtt.on_message = on_message
+    mqtt.connect(MQTT_HOST, MQTT_PORT, 60)
+    mqtt.loop_forever()
